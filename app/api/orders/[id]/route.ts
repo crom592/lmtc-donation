@@ -22,9 +22,13 @@ export async function PATCH(
 
     // 입금 확인 시 티켓 생성
     if (status === 'paid') {
+      // 현재까지 발행된 티켓 수 확인
+      const ticketCount = await prisma.ticket.count();
+      
       const tickets = [];
       for (let i = 0; i < order.quantity; i++) {
-        const ticketNumber = String(Date.now() + i).slice(-6) + String(i + 1).padStart(4, '0');
+        // 순차적인 티켓 번호 생성 (0001, 0002, 0003...)
+        const ticketNumber = String(ticketCount + i + 1).padStart(4, '0');
         tickets.push({
           orderId: order.id,
           ticketNumber,

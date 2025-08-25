@@ -5,7 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Ticket, CheckCircle, Search, AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Ticket, CheckCircle, Search, AlertCircle, Download, CheckSquare } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
 import TicketImage from "@/components/TicketImage";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +41,8 @@ export default function MyTicketsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedTicketIndex, setSelectedTicketIndex] = useState(0);
+  const [selectedTickets, setSelectedTickets] = useState<Set<number>>(new Set());
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // 전화번호 포맷팅 함수
   const formatPhoneNumber = (phone: string) => {
@@ -146,6 +150,137 @@ export default function MyTicketsPage() {
   const allTickets = getAllTickets();
   const currentTicket = allTickets[selectedTicketIndex];
 
+  // 티켓 선택 토글
+  const toggleTicketSelection = (index: number) => {
+    const newSelected = new Set(selectedTickets);
+    if (newSelected.has(index)) {
+      newSelected.delete(index);
+    } else {
+      newSelected.add(index);
+    }
+    setSelectedTickets(newSelected);
+  };
+
+  // 전체 선택/해제
+  const toggleAllSelection = () => {
+    const activeTickets = allTickets
+      .map((ticket, index) => ({ ticket, index }))
+      .filter(({ ticket }) => ticket.status === 'active');
+    
+    if (selectedTickets.size === activeTickets.length) {
+      setSelectedTickets(new Set());
+    } else {
+      const newSelected = new Set<number>();
+      activeTickets.forEach(({ index }) => {
+        newSelected.add(index);
+      });
+      setSelectedTickets(newSelected);
+    }
+  };
+
+  // 선택된 티켓 다운로드
+  const downloadSelectedTickets = async () => {
+    if (selectedTickets.size === 0) {
+      toast({
+        title: "선택 오류",
+        description: "다운로드할 티켓을 선택해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsDownloading(true);
+    
+    // 각 티켓을 캔버스로 그리고 다운로드
+    for (const index of Array.from(selectedTickets)) {
+      const ticket = allTickets[index];
+      if (ticket.status !== 'active') continue;
+      
+      await downloadTicketImage(
+        ticket.ticketNumber.slice(-4),
+        ticket.buyerName,
+        ticket.purchaseDate
+      );
+      
+      // 다음 다운로드 전 잠시 대기
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    setIsDownloading(false);
+    toast({
+      title: "다운로드 완료",
+      description: `${selectedTickets.size}개의 티켓이 다운로드되었습니다.`,
+    });
+  };
+
+  // 티켓 이미지 다운로드 함수
+  const downloadTicketImage = async (
+    ticketNumber: string,
+    buyerName: string,
+    purchaseDate: string
+  ): Promise<void> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve();
+        return;
+      }
+
+      const img = new Image();
+      img.onload = async () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        
+        // 번호 배경
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.fillRect(img.width - 280, 20, 260, 120);
+        
+        // 번호 텍스트
+        ctx.fillStyle = '#1e3a8a';
+        ctx.font = 'bold 48px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(ticketNumber, img.width - 270, 85);
+        
+        // QR 코드 추가
+        try {
+          const QRCode = (await import('qrcode')).default;
+          const qrDataUrl = await QRCode.toDataURL(ticketNumber, {
+            width: 80,
+            margin: 1,
+            color: {
+              dark: '#1e3a8a',
+              light: '#ffffff'
+            }
+          });
+          
+          const qrImg = new Image();
+          qrImg.onload = () => {
+            ctx.drawImage(qrImg, img.width - 110, 35, 80, 80);
+            
+            // 다운로드
+            const link = document.createElement('a');
+            link.download = `lmtc-ticket-${ticketNumber}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+            resolve();
+          };
+          qrImg.src = qrDataUrl;
+        } catch (err) {
+          console.error('QR code generation error:', err);
+          // QR 없이 다운로드
+          const link = document.createElement('a');
+          link.download = `lmtc-ticket-${ticketNumber}.png`;
+          link.href = canvas.toDataURL();
+          link.click();
+          resolve();
+        }
+      };
+      img.src = '/1.jpg';
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* 헤더 */}
@@ -230,26 +365,69 @@ export default function MyTicketsPage() {
                 {/* 티켓 요약 정보 */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>구매 티켓</CardTitle>
-                    <CardDescription className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      총 {getTotalTicketCount()}매 (사용 가능: {getActiveTicketCount()}매)
-                    </CardDescription>
-                  </CardHeader>
-                  {allTickets.length > 1 && (
-                    <CardContent>
-                      <div className="flex gap-2 flex-wrap">
-                        {allTickets.map((ticket, index) => (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>구매 티켓</CardTitle>
+                        <CardDescription className="flex items-center gap-2 mt-1">
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          총 {getTotalTicketCount()}매 (사용 가능: {getActiveTicketCount()}매)
+                        </CardDescription>
+                      </div>
+                      {getActiveTicketCount() > 0 && (
+                        <div className="flex gap-2">
                           <Button
-                            key={index}
-                            variant={selectedTicketIndex === index ? "default" : "outline"}
+                            variant="outline"
                             size="sm"
-                            onClick={() => setSelectedTicketIndex(index)}
-                            disabled={ticket.status === 'used'}
+                            onClick={toggleAllSelection}
                           >
-                            티켓 #{ticket.ticketNumber.slice(-4)}
-                            {ticket.status === 'used' && " (사용됨)"}
+                            <CheckSquare className="h-4 w-4 mr-2" />
+                            전체 선택
                           </Button>
+                          <Button
+                            size="sm"
+                            onClick={downloadSelectedTickets}
+                            disabled={selectedTickets.size === 0 || isDownloading}
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            {isDownloading 
+                              ? "다운로드 중..." 
+                              : `선택 다운로드 (${selectedTickets.size})`}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </CardHeader>
+                  {allTickets.length > 0 && (
+                    <CardContent>
+                      <div className="space-y-2">
+                        {allTickets.map((ticket, index) => (
+                          <div
+                            key={index}
+                            className={`flex items-center gap-3 p-3 rounded-lg border ${
+                              selectedTicketIndex === index ? 'bg-primary/5 border-primary' : 'hover:bg-muted/50'
+                            } ${ticket.status === 'used' ? 'opacity-50' : ''}`}
+                          >
+                            {ticket.status === 'active' && (
+                              <Checkbox
+                                checked={selectedTickets.has(index)}
+                                onCheckedChange={() => toggleTicketSelection(index)}
+                              />
+                            )}
+                            <Button
+                              variant="ghost"
+                              className="flex-1 justify-start"
+                              onClick={() => setSelectedTicketIndex(index)}
+                            >
+                              <span className="font-mono font-bold mr-2">
+                                #{ticket.ticketNumber.slice(-4)}
+                              </span>
+                              {ticket.status === 'used' && (
+                                <Badge variant="secondary" className="ml-2">
+                                  사용됨
+                                </Badge>
+                              )}
+                            </Button>
+                          </div>
                         ))}
                       </div>
                     </CardContent>
