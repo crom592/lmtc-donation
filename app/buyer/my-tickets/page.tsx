@@ -40,6 +40,23 @@ export default function MyTicketsPage() {
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedTicketIndex, setSelectedTicketIndex] = useState(0);
 
+  // 전화번호 포맷팅 함수
+  const formatPhoneNumber = (phone: string) => {
+    const numbers = phone.replace(/[^0-9]/g, '');
+    if (numbers.length === 11) {
+      return numbers.slice(0, 3) + '-' + numbers.slice(3, 7) + '-' + numbers.slice(7);
+    } else if (numbers.length === 10) {
+      return numbers.slice(0, 3) + '-' + numbers.slice(3, 6) + '-' + numbers.slice(6);
+    }
+    return phone;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const numbersOnly = value.replace(/[^0-9]/g, '');
+    setSearchInfo(prev => ({ ...prev, phone: numbersOnly }));
+  };
+
   const handleSearch = async () => {
     if (!searchInfo.name || !searchInfo.phone) {
       toast({
@@ -50,10 +67,12 @@ export default function MyTicketsPage() {
       return;
     }
 
+    const formattedPhone = formatPhoneNumber(searchInfo.phone);
+
     setIsLoading(true);
     try {
       const response = await fetch(
-        `/api/tickets?name=${encodeURIComponent(searchInfo.name)}&phone=${encodeURIComponent(searchInfo.phone)}`
+        `/api/tickets?name=${encodeURIComponent(searchInfo.name)}&phone=${encodeURIComponent(formattedPhone)}`
       );
       
       if (!response.ok) {
@@ -172,10 +191,16 @@ export default function MyTicketsPage() {
                   <Input
                     id="search-phone"
                     type="tel"
-                    placeholder="010-1234-5678"
+                    placeholder="01012345678 (하이픈 없이)"
                     value={searchInfo.phone}
-                    onChange={(e) => setSearchInfo(prev => ({ ...prev, phone: e.target.value }))}
+                    onChange={handlePhoneChange}
+                    maxLength={11}
                   />
+                  {searchInfo.phone && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      조회할 번호: {formatPhoneNumber(searchInfo.phone)}
+                    </p>
+                  )}
                 </div>
               </div>
               <Button 

@@ -64,8 +64,9 @@ export default function UserManual({ open, onOpenChange }: UserManualProps) {
                   <div className="space-y-2 text-gray-700">
                     <p>• <span className="font-semibold">이름</span>: 실명을 입력해주세요 (예: 홍길동)</p>
                     <p>• <span className="font-semibold">연락처</span>: 휴대폰 번호를 입력해주세요</p>
-                    <p>• 연락처는 <span className="text-red-600">- (하이픈)</span>을 포함해서 입력해주세요</p>
-                    <p>• 예시: <span className="font-mono bg-gray-100 px-2 py-1 rounded">010-1234-5678</span></p>
+                    <p>• <span className="text-green-600 font-semibold">하이픈 없이</span> 숫자만 입력하세요</p>
+                    <p>• 예시: <span className="font-mono bg-gray-100 px-2 py-1 rounded">01012345678</span></p>
+                    <p>• 자동으로 <span className="font-mono">010-1234-5678</span> 형식으로 저장됩니다</p>
                   </div>
                 </div>
               </div>

@@ -39,11 +39,35 @@ export default function Home() {
     }
   };
 
+  // 전화번호 포맷팅 함수
+  const formatPhoneNumber = (phone: string) => {
+    // 숫자만 추출
+    const numbers = phone.replace(/[^0-9]/g, '');
+    
+    // 11자리 전화번호 형식으로 변환
+    if (numbers.length === 11) {
+      return numbers.slice(0, 3) + '-' + numbers.slice(3, 7) + '-' + numbers.slice(7);
+    } else if (numbers.length === 10) {
+      return numbers.slice(0, 3) + '-' + numbers.slice(3, 6) + '-' + numbers.slice(6);
+    }
+    return phone;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // 숫자만 입력 가능하도록
+    const numbersOnly = value.replace(/[^0-9]/g, '');
+    setBuyerInfo(prev => ({ ...prev, phone: numbersOnly }));
+  };
+
   const handlePurchase = async () => {
     if (!buyerInfo.name || !buyerInfo.phone) {
       alert("이름과 연락처를 입력해주세요.");
       return;
     }
+
+    // 전화번호 포맷팅
+    const formattedPhone = formatPhoneNumber(buyerInfo.phone);
 
     try {
       // API를 통해 주문 생성
@@ -54,7 +78,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           buyerName: buyerInfo.name,
-          buyerPhone: buyerInfo.phone,
+          buyerPhone: formattedPhone,
           quantity: quantity,
           totalAmount: totalAmount,
         }),
@@ -212,10 +236,16 @@ export default function Home() {
               <Input
                 id="phone"
                 type="tel"
-                placeholder="010-1234-5678"
+                placeholder="01012345678 (하이픈 없이 입력)"
                 value={buyerInfo.phone}
-                onChange={(e) => setBuyerInfo(prev => ({ ...prev, phone: e.target.value }))}
+                onChange={handlePhoneChange}
+                maxLength={11}
               />
+              {buyerInfo.phone && (
+                <p className="text-sm text-muted-foreground">
+                  저장될 번호: {formatPhoneNumber(buyerInfo.phone)}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>

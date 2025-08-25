@@ -16,42 +16,56 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
   const [isScanning, setIsScanning] = useState(false);
 
   useEffect(() => {
-    if (!scannerRef.current) {
-      scannerRef.current = new Html5QrcodeScanner(
-        "qr-reader",
-        { 
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1,
-          showTorchButtonIfSupported: true,
-          showZoomSliderIfSupported: true,
-          defaultZoomValueIfSupported: 2
-        },
-        false
-      );
+    if (!isScanning) {
+      return;
     }
 
-    const onScanSuccess = (decodedText: string) => {
-      onScan(decodedText);
-      if (scannerRef.current) {
-        scannerRef.current.clear();
+    // DOM이 렌더링된 후에 스캐너 초기화
+    const timer = setTimeout(() => {
+      const element = document.getElementById("qr-reader");
+      if (!element) {
+        console.error("QR reader element not found");
+        return;
       }
-      setIsScanning(false);
-    };
 
-    const onScanFailure = () => {
-      // 스캔 실패는 무시 (계속 스캔 시도)
-    };
+      if (!scannerRef.current) {
+        scannerRef.current = new Html5QrcodeScanner(
+          "qr-reader",
+          { 
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1,
+            showTorchButtonIfSupported: true,
+            showZoomSliderIfSupported: true,
+            defaultZoomValueIfSupported: 2
+          },
+          false
+        );
+      }
 
-    if (isScanning) {
+      const onScanSuccess = (decodedText: string) => {
+        onScan(decodedText);
+        if (scannerRef.current) {
+          scannerRef.current.clear();
+          scannerRef.current = null;
+        }
+        setIsScanning(false);
+      };
+
+      const onScanFailure = () => {
+        // 스캔 실패는 무시 (계속 스캔 시도)
+      };
+
       scannerRef.current.render(onScanSuccess, onScanFailure);
-    }
+    }, 100);
 
     return () => {
-      if (scannerRef.current && isScanning) {
+      clearTimeout(timer);
+      if (scannerRef.current) {
         scannerRef.current.clear().catch(error => {
           console.error("Failed to clear scanner", error);
         });
+        scannerRef.current = null;
       }
     };
   }, [isScanning, onScan]);
@@ -62,7 +76,10 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
 
   const stopScanning = () => {
     if (scannerRef.current) {
-      scannerRef.current.clear();
+      scannerRef.current.clear().catch(error => {
+        console.error("Failed to clear scanner", error);
+      });
+      scannerRef.current = null;
     }
     setIsScanning(false);
     onClose();
