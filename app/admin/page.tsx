@@ -243,7 +243,7 @@ export default function AdminPage() {
       
       toast({
         title: "티켓 사용 완료",
-        description: `티켓 #${foundTicket.ticketNumber.slice(-4)}이(가) 사용 처리되었습니다.`,
+        description: `티켓 #${foundTicket.ticketNumber}이(가) 사용 처리되었습니다.`,
       });
     } catch (error) {
       console.error('Ticket use error:', error);

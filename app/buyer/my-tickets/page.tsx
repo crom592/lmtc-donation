@@ -197,7 +197,7 @@ export default function MyTicketsPage() {
       if (ticket.status !== 'active') continue;
       
       await downloadTicketImage(
-        ticket.ticketNumber.slice(-4),
+        ticket.ticketNumber,
         ticket.buyerName,
         ticket.purchaseDate
       );
@@ -419,7 +419,7 @@ export default function MyTicketsPage() {
                               onClick={() => setSelectedTicketIndex(index)}
                             >
                               <span className="font-mono font-bold mr-2">
-                                #{ticket.ticketNumber.slice(-4)}
+                                #{ticket.ticketNumber}
                               </span>
                               {ticket.status === 'used' && (
                                 <Badge variant="secondary" className="ml-2">
@@ -438,7 +438,7 @@ export default function MyTicketsPage() {
                 {currentTicket && (
                   <Card>
                     <CardHeader>
-                      <CardTitle>티켓 #{currentTicket.ticketNumber.slice(-4)}</CardTitle>
+                      <CardTitle>티켓 #{currentTicket.ticketNumber}</CardTitle>
                       <CardDescription>
                         {currentTicket.status === 'used' 
                           ? `사용 완료 (${currentTicket.usedAt ? new Date(currentTicket.usedAt).toLocaleString('ko-KR') : ''})`
@@ -448,7 +448,7 @@ export default function MyTicketsPage() {
                     <CardContent>
                       {currentTicket.status === 'active' ? (
                         <TicketImage
-                          ticketNumber={currentTicket.ticketNumber.slice(-4)}
+                          ticketNumber={currentTicket.ticketNumber}
                           buyerName={currentTicket.buyerName}
                           purchaseDate={currentTicket.purchaseDate}
                         />
