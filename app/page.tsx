@@ -110,7 +110,7 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">LMTC 4기 후원 티켓</h1>
-              <p className="text-sm opacity-90 mt-1">구리 성광교회 선교여행 후원</p>
+              <p className="text-sm opacity-90 mt-1">구리 성광교회 단기선교 후원</p>
             </div>
             <div className="flex items-center gap-2">
               <Button 
@@ -146,10 +146,10 @@ export default function Home() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              LMTC 4기 선교여행을 응원해주세요!
+              LMTC 4기 단기선교를 응원해주세요!
             </CardTitle>
             <CardDescription>
-              여러분의 따뜻한 후원이 선교의 발걸음이 됩니다.
+              여러분의 따뜻한 후원이 단기선교의 발걸음이 됩니다.
               후원 티켓을 구매하시면 실물 티켓 이미지를 받으실 수 있습니다.
             </CardDescription>
           </CardHeader>
@@ -165,7 +165,7 @@ export default function Home() {
                 </div>
                 <div>
                   <CardTitle className="text-lg">LMTC 후원 티켓</CardTitle>
-                  <CardDescription>선교여행 후원금</CardDescription>
+                  <CardDescription>단기선교 후원금</CardDescription>
                 </div>
               </div>
               <Badge variant="secondary" className="text-lg px-3 py-1">
