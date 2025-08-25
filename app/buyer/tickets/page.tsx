@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +30,7 @@ const cafeTickets = [
   { id: "cafe-dessert", name: "디저트 세트", price: 6000, description: "음료 + 디저트 세트" },
 ];
 
-export default function TicketsPage() {
+function TicketsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const category = searchParams.get("category") || "bazaar";
@@ -216,5 +217,13 @@ export default function TicketsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function TicketsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <TicketsContent />
+    </Suspense>
   );
 }
