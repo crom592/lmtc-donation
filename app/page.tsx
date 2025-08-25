@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Ticket, Users, Plus, Minus, ShoppingCart, Settings } from "lucide-react";
+import { Ticket, Users, Plus, Minus, ShoppingCart, Settings, HelpCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import UserManual from "@/components/UserManual";
 
 export default function Home() {
   const router = useRouter();
@@ -17,6 +18,16 @@ export default function Home() {
     name: "",
     phone: "",
   });
+  const [showManual, setShowManual] = useState(false);
+
+  // 처음 방문시 자동으로 메뉴얼 표시
+  useEffect(() => {
+    const hasVisited = localStorage.getItem('hasVisitedBefore');
+    if (!hasVisited) {
+      setShowManual(true);
+      localStorage.setItem('hasVisitedBefore', 'true');
+    }
+  }, []);
 
   const ticketPrice = 10000;
   const totalAmount = ticketPrice * quantity;
@@ -78,6 +89,15 @@ export default function Home() {
               <p className="text-sm opacity-90 mt-1">구리 성광교회 선교여행 후원</p>
             </div>
             <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-primary-foreground hover:bg-primary-foreground/10"
+                onClick={() => setShowManual(true)}
+              >
+                <HelpCircle className="h-4 w-4 mr-2" />
+                사용 방법
+              </Button>
               <Link href="/buyer/my-tickets">
                 <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/10">
                   <Ticket className="h-4 w-4 mr-2" />
@@ -223,6 +243,9 @@ export default function Home() {
           </CardContent>
         </Card>
       </main>
+
+      {/* 사용자 메뉴얼 팝업 */}
+      <UserManual open={showManual} onOpenChange={setShowManual} />
     </div>
   );
 }

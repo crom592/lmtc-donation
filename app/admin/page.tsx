@@ -14,7 +14,8 @@ import {
   Ban,
   LogOut,
   QrCode,
-  Check
+  Check,
+  BookOpen
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
@@ -22,6 +23,10 @@ import dynamic from 'next/dynamic';
 
 const QRScanner = dynamic(() => import('@/components/QRScanner'), { 
   ssr: false 
+});
+
+const AdminManual = dynamic(() => import('@/components/AdminManual'), {
+  ssr: false
 });
 
 interface TicketData {
@@ -53,6 +58,7 @@ export default function AdminPage() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [ticketNumberInput, setTicketNumberInput] = useState("");
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [showManual, setShowManual] = useState(false);
 
   // API에서 주문 가져오기
   const loadOrders = useCallback(async () => {
@@ -314,8 +320,17 @@ export default function AdminPage() {
             <div className="flex items-center gap-2">
               <Button 
                 variant="secondary" 
+                size="sm"
+                onClick={() => setShowManual(true)}
+              >
+                <BookOpen className="h-4 w-4 mr-2" />
+                사용 방법
+              </Button>
+              <Button 
+                variant="secondary" 
                 size="icon"
                 onClick={loadOrders}
+                title="새로고침"
               >
                 <RefreshCw className="h-5 w-5" />
               </Button>
@@ -323,6 +338,7 @@ export default function AdminPage() {
                 variant="secondary" 
                 size="icon"
                 onClick={handleLogout}
+                title="로그아웃"
               >
                 <LogOut className="h-5 w-5" />
               </Button>
@@ -551,6 +567,14 @@ export default function AdminPage() {
         <QRScanner 
           onScan={handleQRScan}
           onClose={() => setShowQRScanner(false)}
+        />
+      )}
+
+      {/* Admin Manual Modal */}
+      {showManual && (
+        <AdminManual 
+          open={showManual}
+          onOpenChange={setShowManual}
         />
       )}
     </div>
