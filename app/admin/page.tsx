@@ -15,7 +15,8 @@ import {
   LogOut,
   QrCode,
   Check,
-  BookOpen
+  BookOpen,
+  Wrench
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
@@ -290,6 +291,43 @@ export default function AdminPage() {
     router.push("/admin/login");
   };
 
+  // 티켓 번호 수정
+  const fixTicketNumbers = async () => {
+    if (!confirm('모든 티켓 번호를 순차적으로 재정렬하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.')) {
+      return;
+    }
+
+    try {
+      const adminPassword = sessionStorage.getItem("adminAuth");
+      const response = await fetch('/api/admin/fix-tickets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password: adminPassword }),
+      });
+
+      if (!response.ok) throw new Error('Failed to fix tickets');
+
+      const result = await response.json();
+      
+      toast({
+        title: "티켓 번호 수정 완료",
+        description: `${result.updates.length}개의 티켓 번호가 수정되었습니다.`,
+      });
+
+      // 주문 목록 새로고침
+      await loadOrders();
+    } catch (error) {
+      console.error('Fix tickets error:', error);
+      toast({
+        title: "수정 실패",
+        description: "티켓 번호 수정 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -325,6 +363,15 @@ export default function AdminPage() {
               >
                 <BookOpen className="h-4 w-4 mr-2" />
                 사용 방법
+              </Button>
+              <Button 
+                variant="secondary" 
+                size="sm"
+                onClick={fixTicketNumbers}
+                title="티켓 번호 수정"
+              >
+                <Wrench className="h-4 w-4 mr-2" />
+                티켓 번호 수정
               </Button>
               <Button 
                 variant="secondary" 
