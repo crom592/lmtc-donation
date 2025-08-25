@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Order {
+  id           String   @id @default(cuid())
+  buyerName    String
+  buyerPhone   String
+  quantity     Int
+  totalAmount  Int
+  status       String   @default("pending") // pending, paid, cancelled
+  paidAt       DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tickets      Ticket[]
+}
+
+model Ticket {
+  id           String   @id @default(cuid())
+  orderId      String
+  ticketNumber String   @unique
+  status       String   @default("active") // active, used, cancelled
+  usedAt       DateTime?
+  usedBy       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  order        Order    @relation(fields: [orderId], references: [id])
+}
