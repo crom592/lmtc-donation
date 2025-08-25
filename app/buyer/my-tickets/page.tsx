@@ -103,9 +103,15 @@ export default function MyTicketsPage() {
 
   // 모든 티켓을 평면화하여 배열로 만들기
   const getAllTickets = () => {
-    const allTickets: any[] = [];
+    const allTickets: Array<{
+      ticketNumber: string;
+      buyerName: string;
+      purchaseDate: string;
+      status: string;
+      usedAt?: string;
+    }> = [];
     orders.forEach((order) => {
-      order.tickets.forEach((ticket, index) => {
+      order.tickets.forEach((ticket) => {
         allTickets.push({
           ticketNumber: ticket.ticketNumber,
           buyerName: order.buyerName,
@@ -232,7 +238,7 @@ export default function MyTicketsPage() {
                       <CardTitle>티켓 #{currentTicket.ticketNumber.slice(-4)}</CardTitle>
                       <CardDescription>
                         {currentTicket.status === 'used' 
-                          ? `사용 완료 (${new Date(currentTicket.usedAt).toLocaleString('ko-KR')})`
+                          ? `사용 완료 (${currentTicket.usedAt ? new Date(currentTicket.usedAt).toLocaleString('ko-KR') : ''})`
                           : '사용 가능'}
                       </CardDescription>
                     </CardHeader>

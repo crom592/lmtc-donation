@@ -4,15 +4,16 @@ import { prisma } from '@/lib/prisma';
 // 티켓 사용 처리
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const { usedBy } = body;
 
     // 티켓 확인
     const ticket = await prisma.ticket.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!ticket) {
@@ -38,7 +39,7 @@ export async function POST(
 
     // 티켓 사용 처리
     const updatedTicket = await prisma.ticket.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         status: 'used',
         usedAt: new Date(),

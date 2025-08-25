@@ -39,7 +39,7 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
       setIsScanning(false);
     };
 
-    const onScanFailure = (error: any) => {
+    const onScanFailure = () => {
       // 스캔 실패는 무시 (계속 스캔 시도)
     };
 

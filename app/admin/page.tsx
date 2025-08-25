@@ -1,14 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { 
-  Users, 
-  CreditCard, 
   CheckCircle, 
   Clock, 
   AlertCircle,
@@ -55,8 +52,24 @@ export default function AdminPage() {
   const [filter, setFilter] = useState<'all' | 'pending' | 'paid' | 'cancelled'>('all');
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [ticketNumberInput, setTicketNumberInput] = useState("");
-  const [showTicketUse, setShowTicketUse] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
+
+  // API에서 주문 가져오기
+  const loadOrders = useCallback(async () => {
+    try {
+      const response = await fetch('/api/orders');
+      if (!response.ok) throw new Error('Failed to fetch orders');
+      const data = await response.json();
+      setOrders(data);
+    } catch (error) {
+      console.error('Order fetch error:', error);
+      toast({
+        title: "오류",
+        description: "주문 목록을 불러오는데 실패했습니다.",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
 
   // 인증 체크
   useEffect(() => {
@@ -86,23 +99,6 @@ export default function AdminPage() {
     checkAuth();
   }, [router]);
 
-  // API에서 주문 가져오기
-  const loadOrders = async () => {
-    try {
-      const response = await fetch('/api/orders');
-      if (!response.ok) throw new Error('Failed to fetch orders');
-      const data = await response.json();
-      setOrders(data);
-    } catch (error) {
-      console.error('Order fetch error:', error);
-      toast({
-        title: "오류",
-        description: "주문 목록을 불러오는데 실패했습니다.",
-        variant: "destructive",
-      });
-    }
-  };
-
   useEffect(() => {
     if (isAuthorized) {
       loadOrders();
@@ -110,7 +106,7 @@ export default function AdminPage() {
       const interval = setInterval(loadOrders, 5000);
       return () => clearInterval(interval);
     }
-  }, [isAuthorized]);
+  }, [isAuthorized, loadOrders]);
 
   // 입금 확인 처리
   const confirmPayment = async (orderId: string) => {
@@ -243,11 +239,11 @@ export default function AdminPage() {
         title: "티켓 사용 완료",
         description: `티켓 #${foundTicket.ticketNumber.slice(-4)}이(가) 사용 처리되었습니다.`,
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Ticket use error:', error);
       toast({
         title: "오류",
-        description: error.message || "티켓 사용 처리 중 오류가 발생했습니다.",
+        description: "티켓 사용 처리 중 오류가 발생했습니다.",
         variant: "destructive",
       });
     }

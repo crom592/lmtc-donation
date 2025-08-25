@@ -4,15 +4,16 @@ import { prisma } from '@/lib/prisma';
 // 주문 상태 업데이트 (입금 확인)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const { status } = body;
 
     // 주문 업데이트
     const order = await prisma.order.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         status,
         paidAt: status === 'paid' ? new Date() : undefined,
@@ -38,7 +39,7 @@ export async function PATCH(
 
     // 업데이트된 주문을 티켓과 함께 반환
     const updatedOrder = await prisma.order.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { tickets: true },
     });
 
@@ -55,17 +56,18 @@ export async function PATCH(
 // 주문 삭제
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // 관련 티켓 먼저 삭제
     await prisma.ticket.deleteMany({
-      where: { orderId: params.id },
+      where: { orderId: id },
     });
 
     // 주문 삭제
     await prisma.order.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });

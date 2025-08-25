@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     const buyerPhone = searchParams.get('phone');
     const buyerName = searchParams.get('name');
 
-    const where: any = {};
+    const where: Record<string, string> = {};
     
     if (status) where.status = status;
     if (buyerPhone) where.buyerPhone = buyerPhone;

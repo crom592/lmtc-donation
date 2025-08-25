@@ -3,13 +3,13 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Copy, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { ArrowLeft, Copy, Clock, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
 interface OrderData {
+  id?: string;
   tickets: Array<{
     id: string;
     name: string;
@@ -20,7 +20,7 @@ interface OrderData {
     name: string;
     phone: string;
   };
-  category: string;
+  category?: string;
   totalAmount: number;
   createdAt: string;
 }
@@ -92,7 +92,7 @@ export default function PaymentPage() {
         try {
           const response = await fetch(`/api/orders?status=paid`);
           const orders = await response.json();
-          const currentOrder = orders.find((o: any) => o.id === currentOrderId);
+          const currentOrder = orders.find((o: OrderData) => o.id === currentOrderId);
           
           if (currentOrder && currentOrder.status === "paid") {
             toast({
