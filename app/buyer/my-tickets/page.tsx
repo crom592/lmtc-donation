@@ -178,7 +178,7 @@ export default function MyTicketsPage() {
     }
   };
 
-  // 선택된 티켓 다운로드
+  // 선택된 티켓을 ZIP으로 다운로드
   const downloadSelectedTickets = async () => {
     if (selectedTickets.size === 0) {
       toast({
@@ -191,29 +191,124 @@ export default function MyTicketsPage() {
 
     setIsDownloading(true);
     
-    // 각 티켓을 캔버스로 그리고 다운로드
-    for (const index of Array.from(selectedTickets)) {
-      const ticket = allTickets[index];
-      if (ticket.status !== 'active') continue;
+    try {
+      const JSZip = (await import('jszip')).default;
+      const zip = new JSZip();
       
-      await downloadTicketImage(
-        ticket.ticketNumber,
-        ticket.buyerName,
-        ticket.purchaseDate
-      );
+      const activeTickets = Array.from(selectedTickets)
+        .map(index => allTickets[index])
+        .filter(ticket => ticket.status === 'active');
       
-      // 다음 다운로드 전 잠시 대기
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // 각 티켓을 ZIP에 추가
+      for (let i = 0; i < activeTickets.length; i++) {
+        const ticket = activeTickets[i];
+        
+        const imageBlob = await generateTicketImageBlob(
+          ticket.ticketNumber,
+          ticket.buyerName,
+          ticket.purchaseDate
+        );
+        
+        if (imageBlob) {
+          zip.file(`lmtc-ticket-${ticket.ticketNumber}.png`, imageBlob);
+        }
+        
+        // 진행 상황 표시를 위한 작은 지연
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      // ZIP 파일 생성 및 다운로드
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(zipBlob);
+      link.download = `lmtc-tickets-${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+      
+      toast({
+        title: "ZIP 다운로드 완료",
+        description: `${activeTickets.length}개의 티켓이 ZIP 파일로 다운로드되었습니다.`,
+      });
+      
+    } catch (error) {
+      console.error('ZIP download error:', error);
+      toast({
+        title: "다운로드 실패",
+        description: "ZIP 파일 생성 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloading(false);
     }
-    
-    setIsDownloading(false);
-    toast({
-      title: "다운로드 완료",
-      description: `${selectedTickets.size}개의 티켓이 다운로드되었습니다.`,
+  };
+
+  // 티켓 이미지 Blob 생성 함수
+  const generateTicketImageBlob = async (
+    ticketNumber: string,
+    buyerName: string,
+    purchaseDate: string
+  ): Promise<Blob | null> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
+
+      const img = new Image();
+      img.onload = async () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        
+        // 번호 배경
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.fillRect(img.width - 280, 20, 260, 120);
+        
+        // 번호 텍스트
+        ctx.fillStyle = '#1e3a8a';
+        ctx.font = 'bold 48px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(ticketNumber, img.width - 270, 85);
+        
+        // QR 코드 추가
+        try {
+          const QRCode = (await import('qrcode')).default;
+          const qrDataUrl = await QRCode.toDataURL(ticketNumber, {
+            width: 80,
+            margin: 1,
+            color: {
+              dark: '#1e3a8a',
+              light: '#ffffff'
+            }
+          });
+          
+          const qrImg = new Image();
+          qrImg.onload = () => {
+            ctx.drawImage(qrImg, img.width - 110, 35, 80, 80);
+            
+            // Canvas를 Blob으로 변환
+            canvas.toBlob((blob) => {
+              resolve(blob);
+            }, 'image/png');
+          };
+          qrImg.src = qrDataUrl;
+        } catch (err) {
+          console.error('QR code generation error:', err);
+          // QR 없이 Blob 생성
+          canvas.toBlob((blob) => {
+            resolve(blob);
+          }, 'image/png');
+        }
+      };
+      img.src = '/1.jpg';
     });
   };
 
-  // 티켓 이미지 다운로드 함수
+  // 티켓 이미지 다운로드 함수 (단일 다운로드용)
   const downloadTicketImage = async (
     ticketNumber: string,
     buyerName: string,
@@ -390,8 +485,8 @@ export default function MyTicketsPage() {
                           >
                             <Download className="h-4 w-4 mr-2" />
                             {isDownloading 
-                              ? "다운로드 중..." 
-                              : `선택 다운로드 (${selectedTickets.size})`}
+                              ? "ZIP 생성 중..." 
+                              : `ZIP 다운로드 (${selectedTickets.size})`}
                           </Button>
                         </div>
                       )}
