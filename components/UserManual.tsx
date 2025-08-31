@@ -103,9 +103,9 @@ export default function UserManual({ open, onOpenChange }: UserManualProps) {
                   <div className="space-y-2 text-gray-700">
                     <div className="bg-white p-3 rounded-lg border border-orange-300">
                       <p className="font-bold text-lg mb-2">📱 입금 계좌 정보</p>
-                      <p>• 은행: <span className="font-bold">국민은행</span></p>
-                      <p>• 계좌번호: <span className="font-bold text-blue-600">123-456-789012</span></p>
-                      <p>• 예금주: <span className="font-bold">구리성광교회LMTC</span></p>
+                      <p>• 은행: <span className="font-bold">농협</span></p>
+                      <p>• 계좌번호: <span className="font-bold text-blue-600">204026-52-124104</span></p>
+                      <p>• 예금주: <span className="font-bold">최춘례</span></p>
                     </div>
                     <div className="bg-yellow-100 p-3 rounded-lg">
                       <p className="flex items-center gap-2">

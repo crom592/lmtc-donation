@@ -33,9 +33,9 @@ export default function PaymentPage() {
 
   // 계좌 정보
   const bankInfo = {
-    bank: "국민은행",
-    account: "123-456-789012",
-    holder: "구리성광교회LMTC",
+    bank: "농협",
+    account: "204026-52-124104",
+    holder: "최춘례",
   };
 
   useEffect(() => {
